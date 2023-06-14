@@ -1,0 +1,64 @@
+.chatbotInputForm {
+    display: flex;
+    position: relative;
+    padding-bottom: 1em;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  
+  .chatbotInputForm input[type="text"],
+  .chatbotInputForm button {
+    background-color: transparent;
+    border: 1px solid var(--medium-light-text);
+    border-radius: 15px;
+    padding: 1em;
+    padding-top: 1em;
+  }
+
+  .chatbotInputForm button {
+    border-left: 0;
+    border-radius: 0 15px 15px 0;
+  }
+  
+  .chatbotInputForm input[type="text"] {
+    color: #fcfcfc;
+    width: 100%;
+    border-right: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  
+  .chatbotInputForm input[type="text"]:focus {
+    outline: none;
+  }
+  
+  .chatbotInputForm input[type="text"]::placeholder {
+    color: #e6e6e6;
+    font-style: italic;
+  }
+  
+  .submitBtn {
+    border-left: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+  
+  .sendBtnIcon {
+    width: 20px;
+    display: block;
+  }
+
+  .inputWrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center; 
+    flex-direction: column;
+    width: 100%;
+    position: relative;
+  }
+  
+  .loadingIconPlaceholder {
+    width: 20px;
+    height: 30px;
+  }

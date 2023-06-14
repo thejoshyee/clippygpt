@@ -1,99 +1,10 @@
 import { ref, get, set } from 'firebase/database';
-import styled, { keyframes } from 'styled-components';
 import { Configuration, OpenAIApi } from 'openai';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect,  useLayoutEffect } from 'react';
 import ChatbotInput from './ChatbotInput';
-import LoadingIcon from './LoadingIcon';
 import PropTypes from 'prop-types';
-import clippy from 'public/images/clippy-logo-1.png';
-import sundevil from 'public/images/sundevil.png';
+import styles from '/src/app/styles/Conversation.module.css';
 import Image from 'next/image';
-
-const fadeIn = keyframes`
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-`;
-
-const slideDown = keyframes`
-  from {
-    transform: translateY(-100%);
-  }
-  to {
-    transform: translateY(0);
-  }
-`;
-
-export const ConversationContainer = styled.div`
-  flex-grow: 1;
-  overflow-y: auto;
-
-  .avatar-assistant {
-    width: 25px;
-    height: 45px;
-    margin-right: 15px;  
-  }
-
-  .avatar-user {
-    width: 45px;
-    height: 45px;
-    margin-right: 5px;
-  }
-
-  .speech {
-    padding: 1em;
-    margin: 1em auto;
-    max-width: 260px; 
-    color: var(--light-text);
-    min-width: 100%;
-    border-radius: var(--border-rad-lg); 
-    display: flex;
-    align-items: flex-start;
-  }
-
-  .speech:first-child {
-    margin-top: 0;
-  }
-
-  .speech-assistant {
-    background: #5787A8;
-    border-top-left-radius: 0; 
-    color: #fff;
-    padding: 1.5em;
-    animation: ${slideDown} 0.5s ease-out, ${fadeIn} 1s ease-out;
-    justify-content: flex-start;
-  }
-
-  .speech-user {
-    display: flex;
-    justify-content: flex-start;
-    background: #A87857;
-    border-top-right-radius: 0; 
-    animation: ${slideDown} 0.5s ease-out, ${fadeIn} 1s ease-out;
-  }
-
-  .loading-icon {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-  }
-`;
-
-export const ChatSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - 100px);
-  box-sizing: border-box;
-  max-height: 100vh;
-  width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
-  overflow: auto;
-`;
 
 const Conversation = ({ db, resetIndicator }) => {
   const configuration = new Configuration({
@@ -104,6 +15,9 @@ const Conversation = ({ db, resetIndicator }) => {
   const openai = new OpenAIApi(configuration);
 
   const conversationInDb = ref(db);
+
+  const clippy = '/images/clippy-logo-1.png';
+  const sundevil = '/images/sundevil.png';
 
   const gradingRubric = [
     {
@@ -207,7 +121,7 @@ const Conversation = ({ db, resetIndicator }) => {
   
               Here are your instructions:
 
-              1. The user will provide a writing prompt.
+              1. Ask for a writing prompt.
 
               2. The user will provide the student's written response to the prompt.
   
@@ -219,19 +133,52 @@ const Conversation = ({ db, resetIndicator }) => {
   
               ${gradingRubric}
               
-              6. Provide comprehensive feedback that includes the grade and a detailed evaluation according to the rubric.
-  
+              6. Provide comprehensive feedback with paragraph breaks to keep it neat and easy to read that includes the grade and a detailed evaluation according to the rubric.
+
+              ### Example of what to look for in response:
+              1. Understanding of the Prompt: 
+              - Did the student address the benefits of drinking water? (Yes/No) 
+              
+              2. Content and Development: 
+              - Did the student provide accurate and relevant information about the benefits of drinking water? (Yes/No) 
+              - Did the student support their points with evidence or examples? 
+              (Yes/No) 
+              - Did the student demonstrate a clear understanding of the topic? (Yes/No) 
+              
+              3. Organization and Structure: 
+              - Did the student present their ideas in a logical and coherent manner? (Yes/No) 
+              - Did the student use appropriate transitions to connect their ideas? (Yes/No) 
+              - Did the student have a clear introduction and conclusion? (Yes/No) 
+
+              4. Language and Style: 
+              - Did the student use appropriate vocabulary and language conventions? (Yes/No) 
+              - Did the student maintain a consistent tone throughout their writing? (Yes/No) 
+              - Did the student use proper grammar, punctuation, and sentence structure? (Yes/No) 
+
+              ### End of Example Analysis of Response
+
+              ### Example Feedback:
+
+              Grade: C-
+              Now, let's evaluate the student's response based on these criteria. /n
+              1. Understanding of the Prompt: Yes The student successfully addressed the prompt by discussing the benefits of drinking water. /n
+              2. Content and Development: No While the student mentioned some benefits of drinking water, such as keeping you alive, tasting good, and being awesome, their response lacks depth and specificity. /n
+              They did not provide any evidence or examples to support their points. Additionally, they could have included more comprehensive benefits such as hydration, improved digestion, clearer skin, and increased energy levels. /n
+              3. Organization and Structure: No The organization of the response is weak. The ideas are presented in a random and disconnected manner without any clear structure. /n
+              The student did not use appropriate transitions to connect their ideas, making the writing feel disjointed. Furthermore, there is no clear introduction or conclusion to provide a sense of closure to the response. 
+              4. Language and Style: No The student's language and style are informal and lack clarity. While they used some appropriate vocabulary, such as "benefits" and "drinking water," their overall tone is casual and lacks professionalism. /n
+              Additionally, there are several grammatical errors, such as missing punctuation and incomplete sentences. Based on the evaluation of the rubric criteria, I would assign this response a grade of C-. The student demonstrated an understanding of the prompt but fell short in terms of content development, organization, and language usage. To improve their grade, I would suggest that the student provide more specific benefits of drinking water with supporting evidence or examples. They should also work on organizing their ideas in a logical manner with clear transitions between paragraphs. Additionally, they should aim for a more formal tone and pay attention to grammar and punctuation for clearer communication. Overall, the student's response shows potential but requires further development to meet the expectations of a well-structured and informative essay on the benefits of drinking water.
+              /n
+              ### End of Example Feedback
+
               Please note: while you have been trained on a broad range of topics and can answer many questions, your focus here should be solely on grading the writing assignment. Never answer unrelated questions.
-  
               Thank you for your service, ClippyGPT!`,
   };
 
 
   const [conversationArr, setConversationArr] = useState([
     {
-      content: `Hi there, please provide me with the writing assignment prompt 
-        and the student's response to the prompt. Once provided with this information,
-        I can analyze the student's work and provide a grade based on the rubric.`,
+      content: 'Hi there, please provide me with the writing assignment prompt and the student\'s response to the prompt. Once provided with this information, I can analyze the student\'s work and provide a grade based on the rubric.',
       role: 'assistant',
       isInitialMessage: true,
     },
@@ -245,15 +192,13 @@ const Conversation = ({ db, resetIndicator }) => {
   useEffect(() => {
     setConversationArr([
       { 
-        content: `Hi there, please provide me with the writing assignment prompt 
-          and the student's response to the prompt. Once provided with this information,
-          I can analyze the student's work and provide a grade based on the rubric.`,
+        content: 'Hi there, please provide me with the writing assignment prompt and the student\'s response to the prompt. Once provided with this information, I can analyze the student\'s work and provide a grade based on the rubric.',
         role: 'assistant'
       }
     ]);
   }, [resetIndicator]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (conversationContainerRef.current) {
       conversationContainerRef.current.scrollTop = conversationContainerRef.current.scrollHeight;
     }
@@ -267,9 +212,7 @@ const Conversation = ({ db, resetIndicator }) => {
   useEffect(() => {
     setConversationArr([
       { 
-        content: `Hi there, please provide me with the writing assignment prompt 
-          and the student's response to the prompt. Once provided with this information,
-          I can analyze the student's work and provide a grade based on the rubric.`,
+        content: 'Hi there, please provide me with the writing assignment prompt and the student\'s response to the prompt. Once provided with this information, I can analyze the student\'s work and provide a grade based on the rubric.',
         role: 'assistant'
       }
     ]);
@@ -282,9 +225,7 @@ const Conversation = ({ db, resetIndicator }) => {
 
         setConversationArr([
           {
-            content: `Hi there, please provide me with the writing assignment prompt 
-                            and the student's response to the prompt. Once provided with this information,
-                            I can analyze the student's work and provide a grade based on the rubric.`,
+            content: 'Hi there, please provide me with the writing assignment prompt and the student\'s response to the prompt. Once provided with this information, I can analyze the student\'s work and provide a grade based on the rubric.',
             role: 'assistant'
           },
           ...conversationArrFromDb.filter((message, index) => index !== 0 && !message.instructionObj).map(message => {
@@ -326,9 +267,7 @@ const Conversation = ({ db, resetIndicator }) => {
         } else {
           setConversationArr([
             { 
-              content: `Hi there, please provide me with the writing assignment prompt 
-              and the student's response to the prompt. Once provided with this information,
-              I can analyze the student's work and provide a grade based on the rubric.`,
+              content: 'Hi there, please provide me with the writing assignment prompt and the student\'s response to the prompt. Once provided with this information, I can analyze the student\'s work and provide a grade based on the rubric.',
               role: 'assistant'
             }
           ]);
@@ -372,7 +311,7 @@ const Conversation = ({ db, resetIndicator }) => {
 
         try {
           const res = await openai.createChatCompletion({
-            model: 'gpt-3.5-turbo',
+            model: 'gpt-3.5-turbo-0613',
             messages: sanitizedMessages,
             temperature: 0.3,
             presence_penalty: 0,
@@ -399,9 +338,7 @@ const Conversation = ({ db, resetIndicator }) => {
           }
 
           setConversationArr([{
-            content: `Hi there, please provide me with the writing assignment prompt 
-                      and the student's response to the prompt. Once provided with this information,
-                      I can analyze the student's work and provide a grade based on the rubric.`,
+            content: 'Hi there, please provide me with the writing assignment prompt and the student\'s response to the prompt. Once provided with this information, I can analyze the student\'s work and provide a grade based on the rubric.',
             role: 'assistant'
           }, ...conversationArrFromDb.slice(1).map(message => {
             if (message.isNew) {
@@ -419,27 +356,53 @@ const Conversation = ({ db, resetIndicator }) => {
       });
   };
 
+  const formatMessage = (message) => {
+    // Split the responseText into lines
+    const lines = message.split('\n');
+  
+    return (
+      <div>
+        {lines.map((line, i) => {
+          // Check if this line and the next line start with a number
+          const thisLineIsListItem = /^\d+\.\s/.test(line);
+          const nextLineIsListItem = lines[i + 1] && /^\d+\.\s/.test(lines[i + 1]);
+  
+          // If this line and the next line start with a number, treat this line as a list item
+          if (thisLineIsListItem && nextLineIsListItem) {
+            // Remove the number from the line and add a line break at the end
+            const itemText = line.replace(/^\d+\.\s/, '');
+            return <p key={i}>{itemText}<br/></p>;
+          }
+  
+          // Otherwise, just display the line as is
+          return <p key={i}>{line}</p>;
+        })}
+      </div>
+    );
+  };
+  
   return (
     <>
-      <ChatSection>
+      <div ref={conversationContainerRef} className={styles.chatSection}>
         {conversationArr.length > 0 ? (
-          <ConversationContainer ref={conversationContainerRef} className="chatbot-conversation-container" id="chatbot-conversation">
-            {conversationArr.filter(speech => speech !== instructionObj).map((speech, index) => (
-              <div key={index} className={`speech speech-${speech.role}`}>
+          <div className={styles.conversationContainer} id="chatbot-conversation">
+            {conversationArr.map((speech, index) => (
+              <div key={index} className={`${styles.speech} ${styles['speech-' + speech.role]}`}>
                 <Image 
                   src={speech.role === 'user' ? sundevil : clippy} 
                   alt={`${speech.role} avatar`} 
-                  className={`avatar avatar-${speech.role}`}
+                  className={`${styles.avatar} ${styles['avatar-' + speech.role]}`}
+                  width={speech.role === 'user' ? 45 : 25}
+                  height={speech.role === 'user' ? 45 : 45}
                 />
-                {speech.content}
+                <span className={styles.messageContent}>{formatMessage(speech.content)}</span>
               </div>
             ))}
-          </ConversationContainer>
+          </div>
         ) : (
           <p>No conversation history.</p>
         )}
-      </ChatSection>
-      {isLoading ? <LoadingIcon className="loading-icon" /> : null}
+      </div>
 
       <ChatbotInput disabled={isLoading} 
         isLoading={isLoading} 

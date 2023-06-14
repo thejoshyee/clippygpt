@@ -1,8 +1,9 @@
 import PropTypes from 'prop-types';
+import styles from 'src/app/styles/ChatbotInput.module.css';
 
 const Button = ({ children, handleClick, isDisabled }) => {
   return (
-    <button className="submit-btn" type="submit" disabled={isDisabled} onClick={handleClick}>
+    <button className={styles.submitBtn} type="submit" disabled={isDisabled} onClick={handleClick}>
       {children}
     </button>
   );

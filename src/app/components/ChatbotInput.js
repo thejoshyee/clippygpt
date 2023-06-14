@@ -1,55 +1,10 @@
-import styled from 'styled-components';
 import Button from './Button';
 import Image from 'next/image';
 import { useState } from 'react';
 import PropTypes from 'prop-types';
+import styles from 'src/app/styles/ChatbotInput.module.css';
 
-
-const ChatbotInputForm = styled.form`
-  display: flex;
-  position: relative;
-  padding-bottom: 1em;
-  width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
-
-  input[type="text"],
-  button {
-    background-color: transparent;
-    border: 1px solid var(--medium-light-text);
-    border-radius: 15px;
-    padding: 1em;
-  }
-
-  input[type="text"] {
-    color: #fcfcfc;
-    width: 100%;
-    border-right: 0;
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-
-    &:focus {
-      outline: none;
-    }
-
-    &::placeholder {
-      color: #e6e6e6;
-      font-style: italic;
-    }
-  }
-
-  .submit-btn {
-    border-left: 0;
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-  }
-
-  .send-btn-icon {
-    width: 20px;
-    display: block;
-  }
-`;
-
+const loadingIcon = '/images/loading.svg';
 
 const ChatbotInput = ({
   fetchReply,
@@ -83,33 +38,41 @@ const ChatbotInput = ({
   };
 
   return (
-    <ChatbotInputForm onSubmit={handleSubmit}>
-      <input
-        name="user-input"
-        type="text"
-        id="user-input"
-        placeholder={isLoading ? 'Clippy is thinking...' : 'Type your message here'}
-        required
-        value={inputValue}
-        onChange={handleChange}
-        autoComplete="off"
-        onKeyDown={(e) => {
-          // Prevent form submission when Enter key is pressed and isLoading is true
-          if (e.key === 'Enter' && isLoading) {
-            e.preventDefault();
-          }
-        }}
-      />
-      <Button type="submit" id="submit-btn" className="submit-btn">
-        <Image
-          src="/images/arrow-right-circle.svg"
-          className="send-btn-icon"
-          height={20}
-          width={20}
-          alt="send"
+    <div className={styles.inputWrapper}>
+      {isLoading ? (
+        <div className={styles.loadingIconWrapper}>
+          <Image src={loadingIcon} height={20} width={20} alt="loading" />
+        </div>
+      ) : (
+        <div className={styles.loadingIconPlaceholder} />
+      )}
+      <form onSubmit={handleSubmit} className={styles.chatbotInputForm}>
+        <input
+          name="user-input"
+          type="text"
+          id="user-input"
+          placeholder={isLoading ? 'Clippy is thinking...' : 'Type your message here'}
+          required
+          value={inputValue}
+          onChange={handleChange}
+          autoComplete="off"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && isLoading) {
+              e.preventDefault();
+            }
+          }}
         />
-      </Button>
-    </ChatbotInputForm>
+        <Button type="submit" id="submit-btn" className={styles.submitBtn}>
+          <Image
+            src="/images/arrow-right-circle.svg"
+            className={styles.sendBtnIcon}
+            height={20}
+            width={20}
+            alt="send"
+          />
+        </Button>
+      </form>
+    </div>
   );
 };
 
@@ -124,4 +87,3 @@ ChatbotInput.propTypes = {
 };
 
 export default ChatbotInput;
-
