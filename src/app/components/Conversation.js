@@ -5,6 +5,7 @@ import ChatbotInput from './ChatbotInput';
 import PropTypes from 'prop-types';
 import styles from '/src/app/styles/Conversation.module.css';
 import Image from 'next/image';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 const Conversation = ({ db, resetIndicator }) => {
   const configuration = new Configuration({
@@ -14,10 +15,9 @@ const Conversation = ({ db, resetIndicator }) => {
 
   const openai = new OpenAIApi(configuration);
 
-  const conversationInDb = ref(db);
-
   const clippy = '/images/clippy-logo-1.png';
-  const sundevil = '/images/sundevil.png';
+  const userIcon = '/images/userIcon.png';
+  
 
   const gradingRubric = [
     {
@@ -175,28 +175,38 @@ const Conversation = ({ db, resetIndicator }) => {
               Thank you for your service, ClippyGPT!`,
   };
 
+  const initialMessage = {
+    content: 'Hi there, please provide me with the writing assignment prompt and the student\'s response to the prompt. Once provided with this information, I can analyze the student\'s work and provide a grade based on the rubric.',
+    role: 'assistant',
+    isInitialMessage: true,
+  };
 
-  const [conversationArr, setConversationArr] = useState([
-    {
-      content: 'Hi there, please provide me with the writing assignment prompt and the student\'s response to the prompt. Once provided with this information, I can analyze the student\'s work and provide a grade based on the rubric.',
-      role: 'assistant',
-      isInitialMessage: true,
-    },
-  ]);
-
+  const [conversationArr, setConversationArr] = useState([initialMessage]);
   const [isLoading, setIsLoading] = useState(false);
+  const [userUID, setUserUID] = useState(null);
 
   const conversationContainerRef = useRef(null);
 
-  // Reset conversationArr when resetIndicator changes
   useEffect(() => {
-    setConversationArr([
-      { 
-        content: 'Hi there, please provide me with the writing assignment prompt and the student\'s response to the prompt. Once provided with this information, I can analyze the student\'s work and provide a grade based on the rubric.',
-        role: 'assistant'
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUserUID(user.uid);
+      } else {
+        setUserUID(null);
+        setConversationArr([initialMessage]);
       }
-    ]);
-  }, [resetIndicator]);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (userUID) {
+      fetchConversation(userUID);
+    }
+  }, [resetIndicator, userUID]);
+
 
   useLayoutEffect(() => {
     if (conversationContainerRef.current) {
@@ -204,30 +214,15 @@ const Conversation = ({ db, resetIndicator }) => {
     }
   }, [conversationArr]);
 
-  useEffect(() => {
-    fetchConversation();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
-    setConversationArr([
-      { 
-        content: 'Hi there, please provide me with the writing assignment prompt and the student\'s response to the prompt. Once provided with this information, I can analyze the student\'s work and provide a grade based on the rubric.',
-        role: 'assistant'
-      }
-    ]);
-  }, [resetIndicator]);
-
-  useEffect(() => {
+    if (!userUID) return;
     const fetchMessages = async () => {
       try {
         const conversationArrFromDb = await getMessagesFromDB();
 
         setConversationArr([
-          {
-            content: 'Hi there, please provide me with the writing assignment prompt and the student\'s response to the prompt. Once provided with this information, I can analyze the student\'s work and provide a grade based on the rubric.',
-            role: 'assistant'
-          },
+          initialMessage,
           ...conversationArrFromDb.filter((message, index) => index !== 0 && !message.instructionObj).map(message => {
             if (message.isNew) {
               return {...message, isNew: false};
@@ -244,9 +239,9 @@ const Conversation = ({ db, resetIndicator }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const getMessagesFromDB = async () => {
+  const getMessagesFromDB = async (uid) => {    
     try {
-      const conversationSnapshot = await get(ref(db));
+      const conversationSnapshot = await get(ref(db, `conversations/${uid}`));
       if (conversationSnapshot.exists()) {
         const conversationArrFromDb = Object.values(conversationSnapshot.val());
         return conversationArrFromDb;
@@ -258,102 +253,100 @@ const Conversation = ({ db, resetIndicator }) => {
     }
   };
 
-  const fetchConversation = async () => {
-    get(conversationInDb)
-      .then((snapshot) => {
-        if (snapshot.exists()) {
-          const conversationArrFromDb = Object.values(snapshot.val());
-          setConversationArr(conversationArrFromDb);
-        } else {
-          setConversationArr([
-            { 
-              content: 'Hi there, please provide me with the writing assignment prompt and the student\'s response to the prompt. Once provided with this information, I can analyze the student\'s work and provide a grade based on the rubric.',
-              role: 'assistant'
-            }
-          ]);
+  const fetchConversation = async (uid) => {
+    const userConversationRef = ref(db, `conversations/${uid}`);
+    try {
+      const snapshot = await get(userConversationRef);
+      if (snapshot.exists()) {
+        let conversationArrFromDb = Object.values(snapshot.val()).filter(
+          (message) => message.role !== 'system'
+        );
+        // Ensure the initial message is included if the conversation is not empty
+        if (conversationArrFromDb.length === 0 || conversationArrFromDb[0].isInitialMessage) {
+          conversationArrFromDb = [initialMessage, ...conversationArrFromDb.filter((msg) => !msg.isInitialMessage)];
         }
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+        setConversationArr(conversationArrFromDb);
+      } else {
+        // Push the initial message to the database if no data exists
+        await set(userConversationRef, { [Date.now()]: initialMessage });
+        setConversationArr([initialMessage]);
+      }
+    } catch (error) {
+      console.error('Error fetching conversation:', error);
+      setConversationArr([initialMessage]);
+    }
   };
 
   const fetchReply = async (message) => {
+    if (!userUID) return;
 
-    get(conversationInDb)
-      .then(async (snapshot) => {
-        let conversationArrFromDb;
-        setIsLoading(true);
+    const userConversationRef = ref(db, `conversations/${userUID}`);
+    try {
+      setIsLoading(true);
+      const snapshot = await get(userConversationRef);
+      let conversationArrFromDb;
+      if (snapshot.exists()) {
+        conversationArrFromDb = Object.values(snapshot.val()).filter(
+          (message) => message.role !== 'system'
+        );
+      } else {
+        conversationArrFromDb = [];
+      }
 
-        if (snapshot.exists()) {
-          let values = Object.values(snapshot.val());
-          conversationArrFromDb = values.flat();
-        } else {
-          conversationArrFromDb = [instructionObj];
-        }
-  
-        conversationArrFromDb.push({
-          role: 'user',
-          content: message,
-          isNew: true
-        });
-        
-        const messages = [
-          { role: 'system', content: 'Answer only questions related to the writing assignment. Don\'t answer random questions. Stick to the writing assignment asking for a teacher prompt and student response.' },
-          { role: 'user', content: message }
-        ];
-        
-        const sendToApi = conversationArrFromDb.concat(messages);
-        
-        const sanitizedMessages = sendToApi.map(({ content, role }) => ({ content, role }));
-        
-        sanitizedMessages.unshift(instructionObj);
-
-        try {
-          const res = await openai.createChatCompletion({
-            model: 'gpt-3.5-turbo-0613',
-            messages: sanitizedMessages,
-            temperature: 0.3,
-            presence_penalty: 0,
-            frequency_penalty: 0.3
-          });
-  
-          if (res.data.choices[0] && res.data.choices[0].message) {
-            const assistantMessage = res.data.choices[0].message;
-
-            conversationArrFromDb.push({
-              role: 'assistant',
-              content: assistantMessage.content.trim(),
-              isNew: true 
-            });
-          } else {
-            console.error('The assistant\'s message is not available');
-          }
-  
-          // Update the full conversation history in the database
-          set(conversationInDb, conversationArrFromDb);
-
-          if(conversationArrFromDb.length > 100){
-            conversationArrFromDb = conversationArrFromDb.slice(50);
-          }
-
-          setConversationArr([{
-            content: 'Hi there, please provide me with the writing assignment prompt and the student\'s response to the prompt. Once provided with this information, I can analyze the student\'s work and provide a grade based on the rubric.',
-            role: 'assistant'
-          }, ...conversationArrFromDb.slice(1).map(message => {
-            if (message.isNew) {
-              return {...message, isNew: false};
-            }
-            return message;
-          })]);
-        } finally {
-          setIsLoading(false);
-        }
-      })
-      .catch((error) => {
-        console.error(error.response.data);
-        setIsLoading(false);
+      conversationArrFromDb.push({
+        role: 'user',
+        content: message,
+        isNew: true,
       });
+
+      const messages = [
+        { role: 'system', content: 'Answer only questions related to the writing assignment. Don\'t answer random questions. Stick to the writing assignment asking for a teacher prompt and student response.' },
+        { role: 'user', content: message },
+      ];
+
+      const sendToApi = conversationArrFromDb.concat(messages);
+      const sanitizedMessages = sendToApi.map(({ content, role }) => ({ content, role }));
+      sanitizedMessages.unshift(instructionObj);
+
+      const res = await openai.createChatCompletion({
+        model: 'gpt-3.5-turbo',
+        messages: sanitizedMessages,
+        temperature: 0.3,
+        presence_penalty: 0,
+        frequency_penalty: 0.3,
+      });
+
+      if (res.data.choices[0] && res.data.choices[0].message) {
+        const assistantMessage = res.data.choices[0].message;
+        conversationArrFromDb.push({
+          role: 'assistant',
+          content: assistantMessage.content.trim(),
+          isNew: true,
+        });
+      } else {
+        console.error('The assistant\'s message is not available');
+      }
+
+      if (conversationArrFromDb.length === 0 || conversationArrFromDb[0].isInitialMessage) {
+        conversationArrFromDb = [initialMessage, ...conversationArrFromDb.filter((msg) => !msg.isInitialMessage)];
+      }
+
+      await set(userConversationRef, conversationArrFromDb);
+
+      setConversationArr([
+        initialMessage,
+        ...conversationArrFromDb.slice(1).map((message) => {
+          if (message.isNew) {
+            return { ...message, isNew: false };
+          }
+          return message;
+        }),
+      ]);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const formatMessage = (message) => {
@@ -373,7 +366,6 @@ const Conversation = ({ db, resetIndicator }) => {
             const itemText = line.replace(/^\d+\.\s/, '');
             return <p key={i}>{itemText}<br/></p>;
           }
-  
           // Otherwise, just display the line as is
           return <p key={i}>{line}</p>;
         })}
@@ -389,7 +381,7 @@ const Conversation = ({ db, resetIndicator }) => {
             {conversationArr.map((speech, index) => (
               <div key={index} className={`${styles.speech} ${styles['speech-' + speech.role]}`}>
                 <Image 
-                  src={speech.role === 'user' ? sundevil : clippy} 
+                  src={speech.role === 'user' ? userIcon : clippy} 
                   alt={`${speech.role} avatar`} 
                   className={`${styles.avatar} ${styles['avatar-' + speech.role]}`}
                   width={speech.role === 'user' ? 45 : 25}
@@ -416,7 +408,8 @@ const Conversation = ({ db, resetIndicator }) => {
 
 Conversation.propTypes = {
   db: PropTypes.object.isRequired,
-  resetIndicator: PropTypes.bool.isRequired
+  resetIndicator: PropTypes.bool.isRequired,
+  user: PropTypes.object
 };
 
 

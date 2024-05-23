@@ -5,7 +5,7 @@ const ChatbotContainer = ({ children }) => {
   return (
     <div className={styles.container}>
       {children}
-      <footer className={styles.footer}>&#169; Josh Yee 2023</footer>
+      <footer className={styles.footer}>&#169; Josh Yee 2024</footer>
     </div>
   );
 };

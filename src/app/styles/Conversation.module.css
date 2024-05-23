@@ -3,14 +3,16 @@
   }
 
   .avatar-assistant {
-    width: 25px;
-    height: 45px;
+    width: auto;
+    height: auto;
     margin-right: 20px;  
   }
   
   .avatar-user {
-    width: 45px;
-    height: 45px;
+    width: 60px;
+    height: 35px;
+    margin-left: -10px;
+    margin-top: 10px;
     margin-right: 5px;
   }
   

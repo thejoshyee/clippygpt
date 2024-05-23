@@ -3,15 +3,13 @@ import { getDatabase, ref, remove } from 'firebase/database';
 import PropTypes from 'prop-types';
 import styles from 'src/app/styles/ChatbotHeader.module.css';
 
-const ChatbotHeader = ({ onReset }) => {
+const ChatbotHeader = ({ onReset, user, handleSignOut }) => {
   const db = getDatabase();
-  const conversationRef = ref(db);
+  const userConversationRef = ref(db, `conversations/${user?.uid}`);
 
   const handleReset = () => {
-    remove(conversationRef)
+    remove(userConversationRef)
       .then(() => {
-        // eslint-disable-next-line no-console
-        console.log('Database cleared.');
         onReset();
       })
       .catch((error) => {
@@ -29,8 +27,10 @@ const ChatbotHeader = ({ onReset }) => {
         </div>
       </div>
       <div className={styles.headerRight}>      
-        <p className={styles.supportId}>User ID: 12345</p>
-        <button onClick={handleReset} className={styles.clearBtn} id="clear-btn">Reset</button>
+        {user ? <><><p className={styles.supportId}><b>Username: </b>{user.displayName ? user.displayName : user.email}</p>
+          <button onClick={handleSignOut} className={styles.signOutBtn} id="clear-btn">Sign Out</button></>
+        <button onClick={handleReset} className={styles.clearBtn} id="clear-btn">Reset</button></> : ''
+        }
       </div>
     </div>
   );
@@ -38,6 +38,8 @@ const ChatbotHeader = ({ onReset }) => {
 
 ChatbotHeader.propTypes = {
   onReset: PropTypes.func.isRequired,
+  user: PropTypes.object,
+  handleSignOut: PropTypes.func
 };
 
 export default ChatbotHeader;

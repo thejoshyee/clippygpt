@@ -36,7 +36,6 @@ main {
 
 /* Track */
 ::-webkit-scrollbar-track {
-  /* background: rgba(255, 255, 255, 0.1);  */
   border-radius: 10px;
 }
  
@@ -54,4 +53,22 @@ main {
 body {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.4) rgba(255, 255, 255, 0.1);
+}
+
+#firebaseui-auth-container {
+  margin: auto;
+  width: 50%;
+}
+
+.sign-in-text {
+  text-align: center;
+  color: white;
+}
+
+.sign-in-container {
+  margin-top: 30vh;
+}
+
+.sign-out {
+  cursor: pointer;
 }

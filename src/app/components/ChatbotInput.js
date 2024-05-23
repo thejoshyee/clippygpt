@@ -24,10 +24,10 @@ const ChatbotInput = ({
         ...prevConversation,
         { role: 'user', content: message },
       ]);
-  
+      setInputValue('');
+
       setIsLoading(true);
       await fetchReply(message);
-      setInputValue('');
       setIsLoading(false);
     }
     

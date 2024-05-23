@@ -59,11 +59,34 @@
     border: 1px solid var(--medium-light-text);
     border-radius: 15px;
     padding: 0.5em;
+    margin: 0.5em
   }
   
   .clearBtn:hover {
     border: 1px solid #BC544B;
     background-color: #BC544B;
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .signOutBtn {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    color: var(--medium-light-text);
+    font-size: 12px;
+    margin: 0 auto;
+    align-items: center;
+    background-color: transparent;
+    border: 1px solid var(--medium-light-text);
+    border-radius: 15px;
+    padding: 0.5em;
+    margin: 0.5em
+  }
+
+  .signOutBtn:hover {
+    border: 1px solid #272727;
+    background-color: #272727;
     color: #fff;
     cursor: pointer;
   }
