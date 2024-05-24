@@ -60,13 +60,8 @@ body {
   width: 50%;
 }
 
-.sign-in-text {
-  text-align: center;
-  color: white;
-}
-
 .sign-in-container {
-  margin-top: 30vh;
+  margin-top: 10vh;
 }
 
 .sign-out {
