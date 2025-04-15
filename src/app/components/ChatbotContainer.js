@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import styles from 'src/app/styles/ChatbotContainer.module.css';
+import styles from '../styles/ChatbotContainer.module.css';
 
 const ChatbotContainer = ({ children }) => {
   return (

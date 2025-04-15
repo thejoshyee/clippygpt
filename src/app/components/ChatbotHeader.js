@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { getDatabase, ref, remove } from 'firebase/database';
 import PropTypes from 'prop-types';
-import styles from 'src/app/styles/ChatbotHeader.module.css';
+import styles from '../styles/ChatbotHeader.module.css';
 
 const ChatbotHeader = ({ onReset, user, handleSignOut }) => {
   const db = getDatabase();
