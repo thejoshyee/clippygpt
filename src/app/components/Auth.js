@@ -69,7 +69,7 @@ const Auth = () => {
     <AuthContainer>
       <WelcomeText>
         <h1>Welcome to ClippyGPT! 👋</h1>
-        <p>Sign in or create an account to start chatting with your AI assistant.</p>
+        <p>Sign in or create an account to start chatting with your AI teaching assistant.</p>
       </WelcomeText>
       <div id="firebaseui-auth-container"></div>
     </AuthContainer>
