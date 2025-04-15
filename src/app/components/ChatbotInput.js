@@ -2,7 +2,7 @@ import Button from './Button';
 import Image from 'next/image';
 import { useState } from 'react';
 import PropTypes from 'prop-types';
-import styles from '../styles/ChatbotInput.module.css';
+import styles from '@/app/styles/ChatbotInput.module.css';
 
 const loadingIcon = '/images/loading.svg';
 

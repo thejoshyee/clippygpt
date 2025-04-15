@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import styles from '../styles/ChatbotInput.module.css';
+import styles from '@/app/styles/ChatbotInput.module.css';
 
 const Button = ({ children, handleClick, isDisabled }) => {
   return (
